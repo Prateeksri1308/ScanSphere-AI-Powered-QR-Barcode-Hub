@@ -1,6 +1,10 @@
 [build]
-  publish = "ScanSphere-AI-Powered-QR-Barcode-Hub/frontend/dist"
-
+  # base is the relative path that contains your package.json (adjust if your folder name differs)
+  base = "ScanSphere-AI-Powered-QR-Barcode-Hub/frontend"
+  # publish is relative to the base above
+  publish = "dist"
+  # install + build
+  command = "npm ci && npm run build"
 
 [build.environment]
   NODE_VERSION = "20"
