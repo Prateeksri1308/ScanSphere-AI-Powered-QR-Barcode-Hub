@@ -497,3 +497,21 @@ export default function App() {
     </div>
   );
 }
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Scanner from "./pages/Scanner";
+import Cube from "./pages/Cube";
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/scanner" element={<Scanner />} />
+        <Route path="/cube" element={<Cube />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
