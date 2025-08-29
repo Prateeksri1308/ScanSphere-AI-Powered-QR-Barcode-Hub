@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QR Pro — 3D Cube</title>
+  <link rel="stylesheet" href="theme.css">
+  <script type="module" src="theme.js" defer></script>
+    <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000"/>
+  <link rel="icon" type="png" href="favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <style>
+    :root{
+      /* Responsive cube size: fits phones/tablets/desktops */
+      --size: min(70vmin, 88vw, 70vh);
+      --speed: 12s;
+    }
+    * { box-sizing: border-box; }
+    body { overflow:hidden; margin:0; }
+
+    /* Stage gives perspective */
+    .cube-container {
+      perspective: 1400px;
+      width:100vw; height:80vh;
+      display:flex; justify-content:center; align-items:center;
+      touch-action: none; /* allow pointer dragging without scroll */
+    }
+
+    /* WRAP gets user transforms (rotate/flip/zoom) */
+    .wrap {
+      width: var(--size);
+      height: var(--size);
+      transform-style: preserve-3d;
+      will-change: transform;
+      transition: transform 0.18s ease;
+    }
+
+    /* CUBE keeps the auto-spin animation; faces are children */
+    .cube {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      animation: spin var(--speed) linear infinite;
+    }
+
+    .face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      border: 2px solid rgba(255,255,255,0.15);
+    }
+    .face img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: var(--card-bg, #fff);
+      /* keep QR crisp when scaled */
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* Place faces half the cube depth away */
+    .face.front  { transform: rotateY(  0deg) translateZ(calc(var(--size)/2)); }
+    .face.back   { transform: rotateY(180deg) translateZ(calc(var(--size)/2)); }
+    .face.right  { transform: rotateY( 90deg) translateZ(calc(var(--size)/2)); }
+    .face.left   { transform: rotateY(-90deg) translateZ(calc(var(--size)/2)); }
+    .face.top    { transform: rotateX( 90deg) translateZ(calc(var(--size)/2)); }
+    .face.bottom { transform: rotateX(-90deg) translateZ(calc(var(--size)/2)); }
+
+    @keyframes spin {
+      from { transform: rotateX(0) rotateY(0); }
+      to   { transform: rotateX(360deg) rotateY(360deg); }
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-wrap: wrap; gap: 12px;
+      align-items: center; justify-content: center;
+      background: var(--card-bg, #fff);
+      padding: 10px 14px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    .controls label { font-size: 14px; display:flex; align-items:center; gap:8px; }
+
+    .footer { text-align:center; margin:8px; font-size:14px; }
+  </style>
+</head>
+<body>
+  <!-- Futuristic Loader -->
+<div id="page-loader">
+  <div class="loader-container">
+    <div class="logo-spin">
+      <img src="favicon-32x32.png" alt="Logo" />
+    </div>
+    <div class="dots">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="status-text">
+      <span id="loader-text">Loading...</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+  </div>
+</div>
+  <!-- HEADER -->
+  <header class="header">
+    <nav class="nav container">
+      <div class="brand"><div class="brand-logo"></div><span>QR Pro</span></div>
+      <div class="nav-links desktop-only">
+        <a data-softnav href="index.html" class="btn sm">Home</a>
+        <a data-softnav href="studio.html" class="btn sm">Studio</a>
+        <a data-softnav href="scanner.html" class="btn sm">Scanner</a>
+        <button class="btn icon" data-theme-toggle title="Toggle theme">🌓</button>
+      </div>
+      <button class="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </nav>
+  </header>
+
+  <div class="drawer-backdrop"></div>
+  <aside class="mobile-drawer">
+    <div class="drawer-head">
+      <div class="brand"><div class="brand-logo"></div> QR Pro</div>
+      <button class="close-btn" aria-label="Close">&times;</button>
+    </div>
+    <nav class="nav-links" style="flex-direction:column;gap:12px;">
+      <a data-softnav href="index.html" class="btn sm">Home</a>
+      <a data-softnav href="studio.html" class="btn sm">Studio</a>
+      <a data-softnav href="scanner.html" class="btn sm">Scanner</a>
+      <button class="btn icon" data-theme-toggle title="Toggle theme">🌓</button>
+    </nav>
+  </aside>
+
+  <!-- CUBE STAGE -->
+  <main class="cube-container">
+    <div id="wrap" class="wrap">
+      <div id="cube" class="cube">
+        <div class="face front"><img id="qr1" alt="QR face 1"></div>
+        <div class="face back"><img id="qr2" alt="QR face 2"></div>
+        <div class="face right"><img id="qr3" alt="QR face 3"></div>
+        <div class="face left"><img id="qr4" alt="QR face 4"></div>
+        <div class="face top"><img id="qr5" alt="QR face 5"></div>
+        <div class="face bottom"><img id="qr6" alt="QR face 6"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="controls">
+    <button id="pauseBtn" class="btn primary">⏸ Pause</button>
+    <button id="resetBtn" class="btn ghost">🔄 Reset</button>
+    <button id="flipBtn"  class="btn ghost">🌀 Flip</button>
+    <label>Speed
+      <input id="speedRange" type="range" min="5" max="30" value="12">
+    </label>
+  </div>
+
+  <footer class="footer">Made with ❤️ by <strong>Prateek</strong></footer>
+
+  <script>
+    // Elements
+    const wrap = document.getElementById("wrap");
+    const cube = document.getElementById("cube");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const flipBtn  = document.getElementById("flipBtn");
+    const speedRange = document.getElementById("speedRange");
+
+    // State for user transforms (applied to WRAP, not the cube animation)
+    let rotX = 0, rotY = 0;
+    let scale = 1;
+    let flipped = false;
+    let paused = false;
+
+    function applyWrapTransform(){
+      // Compose transforms on the wrapper so reset/flip/zoom never fight the cube animation
+      const flipScaleX = flipped ? -1 : 1;
+      wrap.style.transform = `scaleX(${flipScaleX}) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${scale})`;
+    }
+
+    // Pause / Resume only affects the cube's animation
+    pauseBtn.addEventListener("click", () => {
+      paused = !paused;
+      cube.style.animationPlayState = paused ? "paused" : "running";
+      pauseBtn.textContent = paused ? "▶ Resume" : "⏸ Pause";
+    });
+
+    // Reset: returns wrapper to default (also unflips & unzoom)
+    resetBtn.addEventListener("click", () => {
+      rotX = 0; rotY = 0;
+      scale = 1;
+      flipped = false;
+      applyWrapTransform();
+    });
+
+    // Flip: inside-out effect (mirror on X)
+    flipBtn.addEventListener("click", () => {
+      flipped = !flipped;
+      applyWrapTransform();
+      flipBtn.classList.toggle("active", flipped);
+    });
+
+    // Speed control (animation duration)
+    speedRange.addEventListener("input", () => {
+      const s = `${speedRange.value}s`;
+      cube.style.animationDuration = s;
+      // Keep paused state if currently paused
+      if (paused) cube.style.animationPlayState = "paused";
+    });
+
+    // Pointer drag rotate (mouse + touch via Pointer Events)
+    let dragging = false, lastX = 0, lastY = 0, wasPausedDuringDrag = false;
+    function onPointerDown(e){
+      dragging = true;
+      lastX = e.clientX; lastY = e.clientY;
+      // Temporarily pause spin while dragging, remember prior state
+      wasPausedDuringDrag = paused;
+      cube.style.animationPlayState = "paused";
+      e.preventDefault();
+    }
+    function onPointerMove(e){
+      if(!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      rotY += dx * 0.3;
+      rotX -= dy * 0.3;
+      lastX = e.clientX; lastY = e.clientY;
+      applyWrapTransform();
+    }
+    function onPointerUp(){
+      if(!dragging) return;
+      dragging = false;
+      // Restore pause state after drag
+      cube.style.animationPlayState = wasPausedDuringDrag ? "paused" : "running";
+    }
+    wrap.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+
+    // Double-tap / Double-click zoom toggle
+    let lastTapTime = 0;
+    function handleTap(){
+      const now = Date.now();
+      if (now - lastTapTime < 300) {
+        scale = (scale === 1) ? 1.3 : 1; // toggle zoom
+        applyWrapTransform();
+      }
+      lastTapTime = now;
+    }
+    wrap.addEventListener("pointerup", handleTap);
+
+    // Load QR (saved via QRPRO, otherwise fallback)
+    function loadQR(){
+      let png = null;
+      try { png = window.QRPRO?.getLastQRPng?.(); } catch (e) {}
+      const fallback = "https://api.qrserver.com/v1/create-qr-code/?size=420x420&data=Hello";
+      const src = png || fallback;
+      for (let i = 1; i <= 6; i++) {
+        const el = document.getElementById("qr"+i);
+        el.src = src;
+        el.alt = "QR face " + i;
+      }
+    }
+
+    // Init
+    loadQR();
+    applyWrapTransform();
+  </script>
+</body>
+</html>

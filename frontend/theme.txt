@@ -1,0 +1,133 @@
+/* ---------- QR Pro — shared theme ---------- */
+/* 1) dark mode memory */
+(() => {
+  const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const saved = localStorage.getItem('qrpro-theme') || (prefersDark ? 'dark' : 'light');
+  if (saved === 'dark') document.documentElement.classList.add('dark');
+})();
+
+/* 2) page-to-page transitions */
+(() => {
+  // overlay element
+  const makeOverlay = () => {
+    let o = document.getElementById('page-x');
+    if (o) return o;
+    o = document.createElement('div');
+    o.id = 'page-x';
+    o.style.position = 'fixed';
+    o.style.inset = '0';
+    o.style.pointerEvents = 'none';
+    o.style.background = 'radial-gradient(120% 120% at 50% -10%, rgba(14,165,233,.07), rgba(2,6,23,1) 55%)';
+    o.style.transform = 'translateY(100%)';
+    o.style.transition = 'transform .55s cubic-bezier(.22,1,.36,1)';
+    o.style.zIndex = '70';
+    document.body.appendChild(o);
+    return o;
+  };
+
+  const overlay = () => makeOverlay();
+
+  // intro
+  window.addEventListener('pageshow', () => {
+    const o = overlay();
+    requestAnimationFrame(() => { o.style.transform = 'translateY(100%)'; });
+  });
+
+  // outro on internal links
+  addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('a[href$=".html"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const url = new URL(a.href, location.href);
+        if (url.origin !== location.origin) return;
+        e.preventDefault();
+        const o = overlay();
+        o.style.pointerEvents = 'auto';
+        o.style.transform = 'translateY(0%)';
+        setTimeout(() => { location.href = url.href; }, 420);
+      });
+    });
+  });
+})();
+
+/* 3) haptic ripple on buttons (add `data-ripple`) */
+(() => {
+  const attachRipple = el => {
+    el.style.position = 'relative';
+    el.style.overflow = 'hidden';
+    el.addEventListener('click', e => {
+      const r = document.createElement('span');
+      const rect = el.getBoundingClientRect();
+      const d = Math.max(rect.width, rect.height);
+      r.style.position = 'absolute';
+      r.style.width = r.style.height = d + 'px';
+      r.style.left = e.clientX - rect.left - d / 2 + 'px';
+      r.style.top = e.clientY - rect.top - d / 2 + 'px';
+      r.style.background = 'radial-gradient(circle, rgba(14,165,233,.35), transparent 60%)';
+      r.style.borderRadius = '50%';
+      r.style.transform = 'scale(0)';
+      r.style.opacity = '1';
+      r.style.transition = 'transform .45s ease, opacity .6s ease';
+      el.appendChild(r);
+      requestAnimationFrame(() => (r.style.transform = 'scale(1)'));
+      setTimeout(() => (r.style.opacity = '0'), 150);
+      setTimeout(() => r.remove(), 650);
+      // tiny haptic (where supported)
+      if (navigator.vibrate) navigator.vibrate(8);
+    });
+  };
+  addEventListener('DOMContentLoaded', () =>
+    document.querySelectorAll('[data-ripple]').forEach(attachRipple)
+  );
+})();
+
+/* 4) floating labels (wrap input/textarea in .fl, add <label>) */
+(() => {
+  const style = document.createElement('style');
+  style.textContent = `
+    .fl{position:relative}
+    .fl input,.fl textarea,.fl select{padding-top:1.35rem}
+    .fl label{
+      position:absolute; left:.85rem; top:.9rem; font-size:.8rem;
+      color:rgb(148 163 184); pointer-events:none; transition:all .2s ease;
+      background: linear-gradient(180deg, rgba(2,6,23,1) 0%, rgba(2,6,23,.6) 100%);
+      padding:0 .35rem; border-radius:.4rem;
+    }
+    .fl:focus-within label,
+    .fl.filled label{ transform:translateY(-.95rem) scale(.92); color:rgb(14 165 233); }
+  `;
+  document.head.appendChild(style);
+
+  const markFilled = (el) => {
+    const box = el.closest('.fl');
+    if (!box) return;
+    if ((el.value || '').trim()) box.classList.add('filled'); else box.classList.remove('filled');
+  };
+
+  addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.fl input,.fl textarea,.fl select').forEach(i => {
+      i.addEventListener('input', () => markFilled(i));
+      markFilled(i);
+    });
+  });
+})();
+
+/* 5) social hover spotlight utility (apply on elements with .social-anim) */
+(() => {
+  addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.social-anim').forEach(el => {
+      el.addEventListener('mousemove', e => {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', e.clientX - r.left + 'px');
+        el.style.setProperty('--my', e.clientY - r.top + 'px');
+      });
+    });
+  });
+})();
+
+/* 6) footer year helper */
+(() => {
+  addEventListener('DOMContentLoaded', () => {
+    const yr = document.getElementById('yr');
+    if (yr) yr.textContent = new Date().getFullYear();
+  });
+})();

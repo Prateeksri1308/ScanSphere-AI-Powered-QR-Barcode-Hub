@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QR Pro — Home</title>
+  <link rel="stylesheet" href="theme.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script type="module" src="theme.js" defer></script>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000"/>
+  <link rel="icon" type="png" href="favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <meta name="description" content="Free AI-Powered QR Code Generator - Smart, Fast & Unlimited.">
+  <meta property="og:title" content="World’s Best Free QR Generator">
+  <meta property="og:description" content="AI QR Generator with logo, analytics, batch processing.">
+  <meta property="og:image" content="https://yourdomain.com/preview.png">
+  <meta property="og:url" content="https://yourdomain.com">
+  <meta name="twitter:card" content="summary_large_image">
+
+
+  <style>
+    #qrcode canvas, #qrcode img {
+      max-width: 100%;
+      height: auto;
+    }
+    #qrcode {
+      text-align:center;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:200px;
+      padding:12px;
+    }
+    @media (max-width:600px){
+      #qrcode { min-height:160px; }
+    }
+  </style>
+</head>
+<body>
+<!-- Futuristic Loader -->
+<div id="page-loader">
+  <div class="loader-container">
+    <div class="logo-spin">
+      <img src="favicon-32x32.png" alt="Logo" />
+    </div>
+    <div class="dots">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="status-text">
+      <span id="loader-text">Loading...</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+  </div>
+</div>
+
+
+  <!-- HEADER -->
+  <header class="header">
+    <nav class="nav container">
+      <div class="brand"><div class="brand-logo"></div><span>QR Pro</span></div>
+      <div class="nav-links desktop-only">
+        <a data-softnav href="scanner.html" class="btn sm">Scanner</a>
+        <a data-softnav href="studio.html"  class="btn sm">Studio</a>
+        <a data-softnav href="cube.html"    class="btn sm">3D</a>
+        <a href="https://github.com/Prateeksri1308/" target="_blank" class="btn sm ghost">GitHub</a>
+        <a href="https://www.linkedin.com/in/prateek-srivastava-backend/" target="_blank" class="btn sm ghost">LinkedIn</a>
+        <button class="btn icon" data-theme-toggle>🌓</button>
+      </div>
+      <button class="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </nav>
+  </header>
+
+    <div class="drawer-backdrop"></div>
+  <aside class="mobile-drawer">
+    <div class="drawer-head"><div class="brand"><div class="brand-logo"></div> QR Pro</div><button class="close-btn">&times;</button></div>
+    <nav class="nav-links" style="flex-direction:column;gap:12px;">
+      <a data-softnav href="index.html" class="btn sm">Home</a>
+      <a data-softnav href="studio.html" class="btn sm">Studio</a>
+      <a data-softnav href="scanner.html" class="btn sm">Scanner</a>
+      <button class="btn icon" data-theme-toggle>🌓</button>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="container section">
+    <section class="card hero">
+      <span class="badge">🏠 Home</span>
+      <h1 class="h1">Generate Your QR</h1>
+      <p class="p-muted">Live responsive preview, customizable & ready for Studio + 3D.</p>
+    </section>
+
+    <section class="card" style="margin-top:18px">
+      <h2>Create</h2>
+      <label for="qrText">Text or URL</label>
+      <input id="qrText" class="input" placeholder="Enter text or URL">
+
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+        <div>
+          <label for="qrColor">Foreground</label>
+          <input id="qrColor" type="color" class="input" value="#000000">
+        </div>
+        <div>
+          <label for="bgColor">Background</label>
+          <input id="bgColor" type="color" class="input" value="#ffffff">
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+        <div>
+          <label for="qrSize">Size (% of screen)</label>
+          <input id="qrSize" type="range" min="10" max="100" value="30" class="input">
+        </div>
+        <div>
+          <label for="errLevel">Error level</label>
+          <select id="errLevel" class="input">
+            <option value="L">Low (7%)</option>
+            <option value="M">Medium (15%)</option>
+            <option value="Q">Quartile (25%)</option>
+            <option value="H" selected>High (30%)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+        <div>
+          <label for="qrMargin">Margin (quiet zone)</label>
+          <input id="qrMargin" type="range" min="0" max="20" value="4" class="input">
+        </div>
+        <div>
+          <label for="qrFormat">Format</label>
+          <select id="qrFormat" class="input">
+            <option value="png" selected>PNG</option>
+            <option value="svg">SVG</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:18px">
+      <h2>Preview</h2>
+      <div id="qrcode" aria-live="polite"></div>
+      <p id="qrInfo" class="p-muted"></p>
+      <p id="savedNote" class="p-muted"></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <button id="downloadBtn" class="btn primary">Download</button>
+        <button id="copyBtn" class="btn ghost">Copy text</button>
+        <a href="studio.html" data-softnav class="btn ghost">Open in Studio</a>
+        <a href="cube.html" data-softnav class="btn ghost">Open in 3D</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">Made with ❤️ by <strong>Prateek</strong></footer>
+
+  <!-- PAGE LOGIC -->
+  <script>
+    const levelMap = v => ({L:QRCode.CorrectLevel.L,M:QRCode.CorrectLevel.M,Q:QRCode.CorrectLevel.Q,H:QRCode.CorrectLevel.H}[v]||QRCode.CorrectLevel.H);
+    const $ = id => document.getElementById(id);
+
+    function generate(){
+      const text = $("qrText").value || "https://example.com";
+      const fg   = $("qrColor").value;
+      const bg   = $("bgColor").value;
+      const pct  = parseInt($("qrSize").value||70,10);
+      const size = Math.floor(window.innerWidth * (pct/100));
+      const lvl  = levelMap($("errLevel").value);
+      const margin = parseInt($("qrMargin").value||4,10);
+
+      const wrap = $("qrcode");
+      wrap.innerHTML = "";
+      new QRCode(wrap, { text, width:size, height:size, colorDark:fg, colorLight:bg, correctLevel:lvl, margin });
+
+      QRPRO.saveLastQRText(text);
+      setTimeout(()=>{
+        const node = wrap.querySelector("canvas") || wrap.querySelector("img");
+        const data = node?.toDataURL ? node.toDataURL("image/png") : node?.src || "";
+        if(data){ QRPRO.saveLastQRPng(data); $("savedNote").textContent = "✅ Saved for Studio & 3D"; }
+      },60);
+
+      $("qrInfo").textContent = text.startsWith("http") ? "🔗 Link detected" : "ℹ️ Plain text";
+    }
+
+    // Events
+    ["qrText","qrColor","bgColor","qrSize","errLevel","qrMargin"].forEach(id=>{
+      $(id).addEventListener("input", generate);
+      $(id).addEventListener("change", generate);
+    });
+
+    $("downloadBtn").addEventListener("click", ()=>{
+      const format = $("qrFormat").value;
+      const node = document.querySelector("#qrcode canvas") || document.querySelector("#qrcode img");
+      if(!node) return;
+
+      if(format==="png"){
+        const href=node.toDataURL?node.toDataURL("image/png"):node.src;
+        Object.assign(document.createElement("a"),{href,download:"qrcode.png"}).click();
+      }
+      if(format==="svg"){
+        // Simple conversion via canvas
+        const xml = `<svg xmlns="http://www.w3.org/2000/svg" width="${node.width}" height="${node.height}">
+            <image href="${node.toDataURL("image/png")}" width="100%" height="100%"/>
+        </svg>`;
+        const blob = new Blob([xml],{type:"image/svg+xml"});
+        const url = URL.createObjectURL(blob);
+        Object.assign(document.createElement("a"),{href:url,download:"qrcode.svg"}).click();
+        URL.revokeObjectURL(url);
+      }
+      if(format==="pdf"){
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        const imgData = node.toDataURL("image/png");
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const qrSize = Math.min(pageWidth-40,150);
+        pdf.addImage(imgData,"PNG",(pageWidth-qrSize)/2,40,qrSize,qrSize);
+        pdf.save("qrcode.pdf");
+      }
+    });
+
+    $("copyBtn").addEventListener("click", async ()=>{
+      const t=$("qrText").value.trim(); if(!t) return;
+      await navigator.clipboard.writeText(t);
+      $("copyBtn").textContent="✅ Copied!"; setTimeout(()=>$("copyBtn").textContent="Copy text",1000);
+    });
+
+    // Init
+    const last = QRPRO.getLastQRText?.();
+    if(last) $("qrText").value = last;
+    generate();
+  </script>
+</body>
+</html>

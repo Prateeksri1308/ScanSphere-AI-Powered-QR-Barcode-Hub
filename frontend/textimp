@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en" class="min-h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QR Pro — Futuristic QR Suite</title>
+  <meta name="theme-color" content="#0ea5e9"/>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { display: ['Inter', 'ui-sans-serif', 'system-ui'] },
+          colors: {
+            primary: { DEFAULT: '#0ea5e9' },
+            glass: 'rgba(255,255,255,0.08)',
+            line: 'rgba(255,255,255,0.12)'
+          },
+          boxShadow: {
+            neon: '0 0 30px rgba(14,165,233,.55), inset 0 0 20px rgba(14,165,233,.25)',
+            soft: '0 10px 30px rgba(0,0,0,.25)'
+          },
+          backdropBlur: { xs: '2px' }
+        }
+      }
+    }
+  </script>
+
+  <!-- Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Lottie -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+
+  <!-- QR Code Gen -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+
+  <!-- jsQR (decode from pixels) -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" defer></script>
+
+  <!-- CryptoJS (AES) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js" defer></script>
+
+  <!-- PapaParse (CSV) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
+
+  <!-- Three.js (3D) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.159.0/three.min.js" defer></script>
+
+  <style>
+    /* Glass + Neo blend */
+    .glass {
+      background: radial-gradient(120% 120% at 10% 10%, rgba(255,255,255,.12), rgba(255,255,255,.06) 40%, rgba(255,255,255,0) 80%),
+                  linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+    }
+    .neo {
+      box-shadow:
+        20px 20px 60px rgba(0,0,0,.25),
+        -20px -20px 60px rgba(255,255,255,.03),
+        inset 0 0 10px rgba(255,255,255,.04);
+    }
+    .btn {
+      transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 25px rgba(14,165,233,.35); }
+    .btn:active { transform: translateY(0); }
+    .glow { box-shadow: 0 0 0 rgba(14,165,233,.0); animation: glow 2.6s ease-in-out infinite; }
+    @keyframes glow {
+      0%,100% { box-shadow: 0 0 0 rgba(14,165,233,.0); }
+      50% { box-shadow: 0 0 35px rgba(14,165,233,.65); }
+    }
+    .ring-grad { border: 1px solid rgba(255,255,255,.15); background: linear-gradient(145deg, rgba(14,165,233,.12), rgba(14,165,233,.04)); }
+    .divider { height:1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent); }
+    .badge { background: rgba(14,165,233,.14); border:1px solid rgba(14,165,233,.36); }
+    .hidden-el { display:none !important; }
+  </style>
+</head>
+
+<body class="font-display bg-[radial-gradient(125%_125%_at_50%_10%,#0b1220_40%,#020617_100%)] text-white min-h-dvh selection:bg-primary/30 selection:text-white">
+  <!-- THEME + GLOBAL LOADER -->
+  <div id="theme-init" class="hidden"></div>
+  <div id="pageLoader" class="fixed inset-0 z-50 grid place-items-center bg-[#020617]">
+    <div class="grid place-items-center gap-6">
+      <lottie-player src="https://lottie.host/6e68b44e-df6a-4a33-9a3a-9b9d18d8987e/9f4nUjG0rP.json" background="transparent" speed="1.2" style="width:140px;height:140px" loop autoplay></lottie-player>
+      <p class="text-slate-300 tracking-wide">Initializing <span class="text-primary font-semibold">QR Pro</span> modules…</p>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <header class="sticky top-0 z-40">
+    <nav class="glass neo px-4 md:px-8 py-3 flex items-center gap-4">
+      <div class="flex items-center gap-3">
+        <span class="w-9 h-9 rounded-2xl ring-grad grid place-items-center glow"><i class="fa-solid fa-qrcode text-primary"></i></span>
+        <span class="text-lg md:text-xl font-semibold">QR Pro</span>
+        <span class="badge text-[11px] px-2 py-1 rounded-lg ml-2">Futuristic Suite</span>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+        <button id="shareApp" class="btn px-3 py-2 rounded-xl glass ring-grad text-sm"><i class="fa-solid fa-share-nodes mr-2"></i>Share</button>
+        <button id="toggleTheme" class="btn px-3 py-2 rounded-xl glass ring-grad text-sm"><i class="fa-solid fa-moon mr-2"></i><span>Dark</span></button>
+        <a href="#scanner" class="btn px-3 py-2 rounded-xl bg-primary/20 hover:bg-primary/30 ring-grad text-sm"><i class="fa-solid fa-camera mr-2"></i>Scan</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="px-4 md:px-8 py-10 md:py-16">
+    <div class="grid md:grid-cols-[1.2fr_.8fr] gap-8 items-center">
+      <div>
+        <h1 class="text-3xl md:text-5xl font-extrabold leading-tight">
+          Build <span class="text-primary">beautiful</span>, secure & scannable QRs.
+        </h1>
+        <p class="text-slate-300 mt-3 md:text-lg">Generate, style, encrypt, batch-create, scan offline, preview in AR, and visualize analytics. Everything in a single file.</p>
+        <div class="flex gap-3 mt-6">
+          <a href="#studio" class="btn bg-primary/30 hover:bg-primary/40 ring-grad px-5 py-3 rounded-2xl"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Open Studio</a>
+          <a href="#cube3d" class="btn glass ring-grad px-5 py-3 rounded-2xl"><i class="fa-brands fa-unity mr-2"></i>3D Cube</a>
+        </div>
+      </div>
+      <div class="glass neo rounded-3xl p-5 md:p-7 relative overflow-hidden">
+        <div class="absolute -right-16 -top-16 w-60 h-60 rounded-full blur-3xl bg-primary/25"></div>
+        <div id="heroQR" class="grid place-items-center"></div>
+        <p class="text-center text-slate-300 mt-4">Preview QR with glow & gradient</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider mx-4 md:mx-8"></div>
+
+  <!-- STUDIO -->
+  <section id="studio" class="px-4 md:px-8 py-12 grid lg:grid-cols-2 gap-8">
+    <!-- Controls -->
+    <div class="glass neo rounded-3xl p-6 md:p-8">
+      <h2 class="text-2xl font-bold mb-1">QR Studio</h2>
+      <p class="text-slate-300 mb-6">Smart content, dynamic styling, password protection, voice input & batch mode.</p>
+
+      <!-- Tabs -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button class="tab btn badge rounded-xl px-3 py-2 text-sm" data-tab="text">Text</button>
+        <button class="tab btn glass rounded-xl px-3 py-2 text-sm" data-tab="url">URL</button>
+        <button class="tab btn glass rounded-xl px-3 py-2 text-sm" data-tab="vcard">vCard</button>
+        <button class="tab btn glass rounded-xl px-3 py-2 text-sm" data-tab="wifi">Wi-Fi</button>
+        <button class="tab btn glass rounded-xl px-3 py-2 text-sm" data-tab="event">Event</button>
+        <button class="tab btn glass rounded-xl px-3 py-2 text-sm" data-tab="geo">Geo</button>
+        <button class="tab btn glass rounded-xl px-3 py-2 text-sm" data-tab="btc">Bitcoin</button>
+        <button class="tab btn glass rounded-xl px-3 py-2 text-sm" data-tab="batch">Batch CSV</button>
+      </div>
+
+      <!-- Forms -->
+      <div id="forms" class="space-y-6">
+        <div data-pane="text">
+          <label class="block text-sm mb-2">Text</label>
+          <textarea id="textInput" class="w-full rounded-xl glass ring-grad p-3 min-h-[100px]" placeholder="Type anything…"></textarea>
+          <div class="flex gap-2 mt-2">
+            <button id="voiceBtn" class="btn px-3 py-2 rounded-xl glass ring-grad text-sm"><i class="fa-solid fa-microphone-lines mr-2"></i>Voice</button>
+            <button id="suggestBtn" class="btn px-3 py-2 rounded-xl glass ring-grad text-sm"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Suggest</button>
+          </div>
+        </div>
+
+        <div data-pane="url" class="hidden-el">
+          <label class="block text-sm mb-2">URL</label>
+          <input id="urlInput" class="w-full rounded-xl glass ring-grad p-3" placeholder="https://example.com" />
+        </div>
+
+        <div data-pane="vcard" class="hidden-el">
+          <div class="grid md:grid-cols-2 gap-3">
+            <input id="vcName" class="rounded-xl glass ring-grad p-3" placeholder="Full Name" />
+            <input id="vcOrg" class="rounded-xl glass ring-grad p-3" placeholder="Company" />
+            <input id="vcTitle" class="rounded-xl glass ring-grad p-3" placeholder="Job Title" />
+            <input id="vcPhone" class="rounded-xl glass ring-grad p-3" placeholder="Phone" />
+            <input id="vcEmail" class="rounded-xl glass ring-grad p-3" placeholder="Email" />
+            <input id="vcUrl" class="rounded-xl glass ring-grad p-3" placeholder="Website" />
+            <input id="vcAddr" class="rounded-xl glass ring-grad p-3 md:col-span-2" placeholder="Address" />
+          </div>
+        </div>
+
+        <div data-pane="wifi" class="hidden-el">
+          <div class="grid md:grid-cols-3 gap-3">
+            <input id="wfSsid" class="rounded-xl glass ring-grad p-3" placeholder="SSID" />
+            <select id="wfType" class="rounded-xl glass ring-grad p-3">
+              <option>WPA</option><option>WEP</option><option>nopass</option>
+            </select>
+            <input id="wfPass" class="rounded-xl glass ring-grad p-3" placeholder="Password" />
+          </div>
+        </div>
+
+        <div data-pane="event" class="hidden-el">
+          <div class="grid md:grid-cols-3 gap-3">
+            <input id="evTitle" class="rounded-xl glass ring-grad p-3 md:col-span-3" placeholder="Event Title" />
+            <input id="evStart" type="datetime-local" class="rounded-xl glass ring-grad p-3" />
+            <input id="evEnd" type="datetime-local" class="rounded-xl glass ring-grad p-3" />
+            <input id="evLoc" class="rounded-xl glass ring-grad p-3" placeholder="Location" />
+          </div>
+        </div>
+
+        <div data-pane="geo" class="hidden-el">
+          <div class="grid md:grid-cols-2 gap-3">
+            <input id="geoLat" class="rounded-xl glass ring-grad p-3" placeholder="Latitude" />
+            <input id="geoLng" class="rounded-xl glass ring-grad p-3" placeholder="Longitude" />
+          </div>
+        </div>
+
+        <div data-pane="btc" class="hidden-el">
+          <div class="grid md:grid-cols-3 gap-3">
+            <input id="btcAddr" class="rounded-xl glass ring-grad p-3 md:col-span-2" placeholder="BTC Address" />
+            <input id="btcAmt" class="rounded-xl glass ring-grad p-3" placeholder="Amount (optional)" />
+          </div>
+        </div>
+
+        <div data-pane="batch" class="hidden-el">
+          <label class="block text-sm mb-2">CSV (headers: type,value)</label>
+          <input id="csvFile" type="file" accept=".csv" class="rounded-xl glass ring-grad p-3 w-full" />
+          <p class="text-xs text-slate-400 mt-1">Supports types: url,text,vcard,wifi,event,geo,btc</p>
+        </div>
+
+        <!-- Styling -->
+        <div class="divider"></div>
+        <h3 class="font-semibold">Style & Security</h3>
+        <div class="grid md:grid-cols-3 gap-3">
+          <div>
+            <label class="text-xs text-slate-400">Foreground</label>
+            <input id="fgColor" type="color" value="#111827" class="w-full h-10 rounded-lg"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Background</label>
+            <input id="bgColor" type="color" value="#ffffff" class="w-full h-10 rounded-lg"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Size</label>
+            <input id="qrSize" type="range" min="180" max="600" value="320" class="w-full"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Rounded</label>
+            <input id="rounded" type="range" min="0" max="30" value="8" class="w-full"/>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Margin</label>
+            <input id="margin" type="range" min="1" max="8" value="4" class="w-full"/>
+          </div>
+          <div class="grid grid-cols-[1fr_auto] items-end gap-2">
+            <input id="logoUrl" class="rounded-xl glass ring-grad p-3" placeholder="Logo URL (png/svg)"/>
+            <button id="clearLogo" class="btn glass ring-grad px-3 py-2 rounded-xl"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="col-span-full">
+            <label class="text-xs text-slate-400">Password (AES-256)</label>
+            <input id="pwd" class="rounded-xl glass ring-grad p-3 w-full" placeholder="Optional — encrypt data before encoding"/>
+          </div>
+        </div>
+
+        <div class="mt-6 flex flex-wrap gap-2">
+          <button id="genBtn" class="btn bg-primary/30 hover:bg-primary/40 ring-grad px-4 py-3 rounded-2xl"><i class="fa-solid fa-qrcode mr-2"></i>Generate</button>
+          <button id="downloadBtn" class="btn glass ring-grad px-4 py-3 rounded-2xl"><i class="fa-solid fa-download mr-2"></i>Download</button>
+          <button id="copyBtn" class="btn glass ring-grad px-4 py-3 rounded-2xl"><i class="fa-solid fa-copy mr-2"></i>Copy PNG</button>
+          <button id="embedBtn" class="btn glass ring-grad px-4 py-3 rounded-2xl"><i class="fa-solid fa-code mr-2"></i>Embed</button>
+        </div>
+
+        <div id="warnings" class="mt-4 text-amber-300 text-sm hidden"></div>
+      </div>
+    </div>
+
+    <!-- Live Output -->
+    <div class="glass neo rounded-3xl p-6 md:p-8 relative overflow-hidden">
+      <div class="absolute -left-12 -bottom-12 w-72 h-72 rounded-full blur-3xl bg-primary/25"></div>
+      <h3 class="text-xl font-semibold mb-2">Live Output</h3>
+      <div id="qrWrap" class="grid place-items-center min-h-[360px]">
+        <div id="qr"></div>
+      </div>
+      <p class="text-slate-300 mt-4">Tip: add a logo and roundness. Keep contrast high for scan reliability.</p>
+    </div>
+  </section>
+
+  <div class="divider mx-4 md:mx-8"></div>
+
+  <!-- SCANNER -->
+  <section id="scanner" class="px-4 md:px-8 py-12 grid lg:grid-cols-2 gap-8 items-start">
+    <div class="glass neo rounded-3xl p-6 md:p-8">
+      <h2 class="text-2xl font-bold mb-1">Offline Scanner</h2>
+      <p class="text-slate-300 mb-4">Works offline. Decode via camera or upload image.</p>
+      <div class="grid md:grid-cols-[1fr_auto] gap-3">
+        <div class="rounded-2xl overflow-hidden ring-grad">
+          <video id="cam" autoplay playsinline class="w-full aspect-video bg-black/50"></video>
+        </div>
+        <div class="grid gap-2">
+          <button id="startCam" class="btn glass ring-grad px-4 py-3 rounded-xl"><i class="fa-solid fa-play mr-2"></i>Start</button>
+          <button id="stopCam" class="btn glass ring-grad px-4 py-3 rounded-xl"><i class="fa-solid fa-stop mr-2"></i>Stop</button>
+          <label class="btn glass ring-grad px-4 py-3 rounded-xl cursor-pointer text-center">
+            <input id="imgFile" type="file" accept="image/*" class="hidden">Upload
+          </label>
+        </div>
+      </div>
+      <canvas id="scanCanvas" class="hidden"></canvas>
+      <div id="scanResult" class="mt-4 p-4 rounded-xl glass ring-grad text-sm break-all"></div>
+
+      <!-- Decrypt input -->
+      <div class="mt-3 grid grid-cols-[1fr_auto] gap-2">
+        <input id="decryptPwd" class="rounded-xl glass ring-grad p-3" placeholder="Password to decrypt (if needed)"/>
+        <button id="decryptBtn" class="btn glass ring-grad px-4 py-3 rounded-xl">Decrypt</button>
+      </div>
+    </div>
+
+    <!-- AR Preview -->
+    <div class="glass neo rounded-3xl p-6 md:p-8">
+      <h3 class="text-xl font-semibold mb-2">AR-style Preview</h3>
+      <p class="text-slate-300 mb-4">Simulated AR overlay: see your QR on a poster or card using your camera feed.</p>
+      <div class="grid gap-3">
+        <div class="relative rounded-2xl overflow-hidden ring-grad">
+          <video id="arCam" autoplay playsinline class="w-full aspect-video bg-black/50"></video>
+          <img id="arOverlay" class="absolute top-6 left-6 w-40 h-40 object-contain opacity-90 drop-shadow-[0_0_20px_rgba(14,165,233,.55)]" />
+        </div>
+        <div class="flex gap-2">
+          <button id="arStart" class="btn glass ring-grad px-4 py-3 rounded-xl">Start AR</button>
+          <button id="arStop" class="btn glass ring-grad px-4 py-3 rounded-xl">Stop AR</button>
+          <select id="arMock" class="rounded-xl glass ring-grad p-3">
+            <option value="poster">Poster</option>
+            <option value="card">Business Card</option>
+            <option value="billboard">Billboard</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider mx-4 md:mx-8"></div>
+
+  <!-- 3D CUBE -->
+  <section id="cube3d" class="px-4 md:px-8 py-12 grid lg:grid-cols-[1fr_.9fr] gap-8 items-center">
+    <div>
+      <h2 class="text-2xl font-bold">3D QR Cube</h2>
+      <p class="text-slate-300 mt-2">Your QR texture mapped to a rotating cube with a neon rim light.</p>
+      <div class="flex gap-2 mt-4">
+        <button id="spinBtn" class="btn glass ring-grad px-4 py-3 rounded-xl"><i class="fa-solid fa-rotate mr-2"></i>Spin</button>
+        <button id="snap3d" class="btn glass ring-grad px-4 py-3 rounded-xl"><i class="fa-solid fa-camera mr-2"></i>Snapshot</button>
+      </div>
+    </div>
+    <div class="glass neo rounded-3xl p-4 relative overflow-hidden">
+      <div id="threeWrap" class="w-full aspect-video"></div>
+    </div>
+  </section>
+
+  <div class="divider mx-4 md:mx-8"></div>
+
+  <!-- ANALYTICS (Local Demo) -->
+  <section class="px-4 md:px-8 py-12 grid lg:grid-cols-2 gap-8">
+    <div class="glass neo rounded-3xl p-6 md:p-8">
+      <h2 class="text-2xl font-bold mb-2">Analytics (Local Demo)</h2>
+      <p class="text-slate-300">We simulate heatmaps & counters in localStorage. Integrate a backend later for team dashboards.</p>
+      <div class="grid grid-cols-3 gap-4 mt-4">
+        <div class="rounded-2xl ring-grad p-4">
+          <div class="text-3xl font-bold" id="genCount">0</div>
+          <div class="text-slate-400 text-sm">Generated</div>
+        </div>
+        <div class="rounded-2xl ring-grad p-4">
+          <div class="text-3xl font-bold" id="scanCount">0</div>
+          <div class="text-slate-400 text-sm">Scanned</div>
+        </div>
+        <div class="rounded-2xl ring-grad p-4">
+          <div class="text-3xl font-bold" id="decryptCount">0</div>
+          <div class="text-slate-400 text-sm">Decrypted</div>
+        </div>
+      </div>
+      <div class="mt-4">
+        <button id="resetAnalytics" class="btn glass ring-grad px-4 py-3 rounded-xl"><i class="fa-solid fa-broom mr-2"></i>Reset Local Analytics</button>
+      </div>
+    </div>
+    <div class="glass neo rounded-3xl p-6 md:p-8">
+      <h3 class="text-xl font-semibold mb-2">Embed Widget</h3>
+      <p class="text-slate-300">Allow others to embed your generator. Copy & paste:</p>
+      <textarea id="embedCode" class="mt-3 w-full rounded-xl glass ring-grad p-3 min-h-[140px]" readonly></textarea>
+    </div>
+  </section>
+
+  <footer class="px-4 md:px-8 py-10 text-center text-slate-400">
+    Made with ❤️ — All client-side. Add your backend later for multi-user analytics & auth.
+  </footer>
+
+  <!-- APP SCRIPT -->
+  <script>
+    // ------- Theme + Loader -------
+    const root = document.documentElement;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedTheme = localStorage.getItem('qrpro-theme') || (prefersDark ? 'dark' : 'light');
+    if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+
+    window.addEventListener('load', () => {
+      const loader = document.getElementById('pageLoader');
+      loader?.classList.add('opacity-0','pointer-events-none');
+      setTimeout(()=>loader?.remove(),450);
+    });
+
+    document.getElementById('toggleTheme').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      const mode = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+      localStorage.setItem('qrpro-theme', mode);
+    });
+
+    // ------- Utilities -------
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => [...document.querySelectorAll(sel)];
+    const toDataURL = (el) => {
+      const img = el.querySelector('img') || el.querySelector('canvas');
+      if (!img) return null;
+      if (img.tagName === 'IMG') {
+        // qrcodejs renders IMG by default
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+        ctx.drawImage(img, 0, 0);
+        return canvas.toDataURL('image/png');
+      }
+      return img.toDataURL('image/png');
+    }
+
+    // ------- Tabs -------
+    $$('.tab').forEach(btn => btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      $$('#forms [data-pane]').forEach(p => p.classList.add('hidden-el'));
+      $(`#forms [data-pane="${tab}"]`)?.classList.remove('hidden-el');
+      $$('.tab').forEach(b => b.classList.remove('badge'));
+      btn.classList.add('badge');
+    }));
+
+    // ------- QR GEN -------
+    const qDiv = $('#qr');
+    let qrObj = null;
+
+    function getContent() {
+      const active = $('#forms [data-pane]:not(.hidden-el)');
+      const id = active?.getAttribute('data-pane');
+      if (id === 'text') return $('#textInput').value.trim();
+      if (id === 'url') return $('#urlInput').value.trim();
+      if (id === 'vcard') {
+        const name = $('#vcName').value.trim();
+        const org  = $('#vcOrg').value.trim();
+        const title= $('#vcTitle').value.trim();
+        const tel  = $('#vcPhone').value.trim();
+        const mail = $('#vcEmail').value.trim();
+        const url  = $('#vcUrl').value.trim();
+        const adr  = $('#vcAddr').value.trim();
+        return `BEGIN:VCARD
+VERSION:3.0
+N:${name}
+ORG:${org}
+TITLE:${title}
+TEL:${tel}
+EMAIL:${mail}
+URL:${url}
+ADR:${adr}
+END:VCARD`;
+      }
+      if (id === 'wifi') {
+        const s=$('#wfSsid').value.trim(), t=$('#wfType').value, p=$('#wfPass').value.trim();
+        return `WIFI:T:${t};S:${s};P:${p};;`;
+      }
+      if (id === 'event') {
+        const t=$('#evTitle').value.trim();
+        const s=$('#evStart').value.replace(/[-:]/g,'').replace('.000','')+'Z';
+        const e=$('#evEnd').value.replace(/[-:]/g,'').replace('.000','')+'Z';
+        const l=$('#evLoc').value.trim();
+        return `BEGIN:VEVENT
+SUMMARY:${t}
+DTSTART:${s}
+DTEND:${e}
+LOCATION:${l}
+END:VEVENT`;
+      }
+      if (id === 'geo') {
+        const a=$('#geoLat').value.trim(), b=$('#geoLng').value.trim();
+        return `geo:${a},${b}`;
+      }
+      if (id === 'btc') {
+        const addr=$('#btcAddr').value.trim(), amt=$('#btcAmt').value.trim();
+        return `bitcoin:${addr}${amt?`?amount=${amt}`:''}`;
+      }
+      if (id === 'batch') return '(batch-mode)';
+      return '';
+    }
+
+    function applyWarnings(content, fg, bg) {
+      const warn = $('#warnings');
+      const contrast = contrastRatio(fg, bg);
+      const dense = content.length > 600;
+      const items = [];
+      if (contrast < 3.5) items.push('Low contrast — increase color contrast for reliable scans.');
+      if (dense) items.push('Content is very long — increase size or reduce data.');
+      warn.classList.toggle('hidden', items.length === 0);
+      warn.innerHTML = items.map(i=>`<div class="mt-1">⚠️ ${i}</div>`).join('');
+    }
+
+    function hexToRgb(hex){
+      const v = hex.replace('#','');
+      const bigint = parseInt(v.length===3? v.split('').map(c=>c+c).join(''):v, 16);
+      const r=(bigint>>16)&255,g=(bigint>>8)&255,b=bigint&255;
+      return {r,g,b};
+    }
+    function luminance({r,g,b}){
+      const a=[r,g,b].map(v=>{v/=255;return v<=0.03928? v/12.92: Math.pow((v+0.055)/1.055,2.4);});
+      return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2];
+    }
+    function contrastRatio(f, b){
+      const L1=luminance(hexToRgb(f))+0.05, L2=luminance(hexToRgb(b))+0.05;
+      return Math.max(L1,L2)/Math.min(L1,L2);
+    }
+
+    function renderQR(data){
+      qDiv.innerHTML = '';
+      qrObj = new QRCode(qDiv, {
+        text: data,
+        width: parseInt($('#qrSize').value,10),
+        height: parseInt($('#qrSize').value,10),
+        colorDark: $('#fgColor').value,
+        colorLight: $('#bgColor').value,
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      // Round + margin visual wrapper (CSS), logo overlay via img on top
+      const logo = $('#logoUrl').value.trim();
+      const rad = parseInt($('#rounded').value,10);
+      const mar = parseInt($('#margin').value,10);
+      qDiv.style.borderRadius = rad+'px';
+      qDiv.style.padding = mar*2+'px';
+      if (logo) {
+        const im = document.createElement('img');
+        im.src = logo; im.alt = 'logo';
+        im.style.position = 'absolute';
+        im.style.width = '20%'; im.style.left='50%'; im.style.top='50%';
+        im.style.transform='translate(-50%,-50%)';
+        im.style.borderRadius='16px'; im.style.boxShadow='0 6px 20px rgba(0,0,0,.35)';
+        qDiv.style.position='relative';
+        qDiv.appendChild(im);
+      }
+    }
+
+    function encryptIfNeeded(text){
+      const pwd = $('#pwd').value.trim();
+      if (!pwd) return text;
+      const enc = CryptoJS.AES.encrypt(text, pwd).toString();
+      return '__enc__:'+enc;
+    }
+    function tryDecrypt(text, pwd){
+      if (!text.startsWith('__enc__:')) return text;
+      try{
+        const enc = text.replace('__enc__:', '');
+        const bytes = CryptoJS.AES.decrypt(enc, pwd);
+        const plain = bytes.toString(CryptoJS.enc.Utf8);
+        return plain || '(wrong password)';
+      }catch{ return '(decrypt failed)'; }
+    }
+
+    // Smart suggest (no OpenAI): heuristics + patterns
+    function suggestFrom(text){
+      const t = text.toLowerCase();
+      if (/business|card|contact/.test(t)) {
+        return `BEGIN:VCARD
+VERSION:3.0
+N:Your Name
+ORG:Your Company
+TITLE:Your Title
+TEL:+1-555-123-4567
+EMAIL:you@example.com
+URL:https://yourdomain.com
+ADR:City, Country
+END:VCARD`;
+      }
+      if (/wifi|password|ssid/.test(t)) return 'WIFI:T:WPA;S:MyWiFi;P:supersecret;;';
+      if (/event|meet|party|zoom/.test(t)) {
+        const start = new Date(Date.now()+3600e3).toISOString().replace(/[-:]/g,'').replace(/\.\d+Z/,'Z');
+        const end   = new Date(Date.now()+7200e3).toISOString().replace(/[-:]/g,'').replace(/\.\d+Z/,'Z');
+        return `BEGIN:VEVENT
+SUMMARY:My Event
+DTSTART:${start}
+DTEND:${end}
+LOCATION:Online
+END:VEVENT`;
+      }
+      if (/map|geo|locat/.test(t)) return 'geo:37.7749,-122.4194';
+      if (/bitcoin|btc|wallet/.test(t)) return 'bitcoin:bc1qexampleaddress?amount=0.01';
+      if (/link|url|http|www/.test(t)) return 'https://yourdomain.com/special';
+      return 'Thanks for trying QR Pro! Paste your text or URL here.';
+    }
+
+    // Generate button
+    $('#genBtn').addEventListener('click', () => {
+      let content = getContent();
+      if (content === '(batch-mode)') return; // handled by file change
+      if (!content) return alert('Nothing to encode.');
+
+      const enc = encryptIfNeeded(content);
+      const fg = $('#fgColor').value, bg=$('#bgColor').value;
+      applyWarnings(content, fg, bg);
+      renderQR(enc);
+
+      // bump local analytics
+      bump('genCount');
+      updateEmbedCode();
+      updateThreeTexture();
+      updateAROverlay();
+    });
+
+    // Voice input
+    $('#voiceBtn').addEventListener('click', () => {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        return alert('Speech Recognition not supported on this browser.');
+      }
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const rec = new SR();
+      rec.lang = 'en-US';
+      rec.onresult = e => {
+        const txt = e.results[0][0].transcript;
+        $('#textInput').value = txt;
+      };
+      rec.start();
+    });
+
+    // Suggest
+    $('#suggestBtn').addEventListener('click', () => {
+      const base = $('#textInput').value.trim();
+      $('#textInput').value = suggestFrom(base || 'business card');
+    });
+
+    // Clear logo
+    $('#clearLogo').addEventListener('click', ()=> { $('#logoUrl').value=''; });
+
+    // Batch CSV
+    $('#csvFile').addEventListener('change', (e)=>{
+      const file = e.target.files?.[0]; if (!file) return;
+      Papa.parse(file, {
+        header: true, complete: (res)=>{
+          const rows = res.data.filter(r=>r?.type && r?.value);
+          if (!rows.length) return alert('No valid rows found.');
+          const zipName = 'qr-batch-'+Date.now();
+          let idx=0;
+          (async function next(){
+            if (idx>=rows.length) return alert('Batch complete. Use right-click → Save image for each generated QR (or add a bundler later).');
+            const row=rows[idx++];
+            const content=row.value.toString();
+            const enc = encryptIfNeeded(content);
+            renderQR(enc);
+            bump('genCount');
+            setTimeout(next, 220); // yield UI
+          })();
+        }
+      });
+    });
+
+    // Download & Copy
+    $('#downloadBtn').addEventListener('click', ()=>{
+      const data = toDataURL(qDiv);
+      if (!data) return alert('Generate a QR first.');
+      const a=document.createElement('a');
+      a.href=data; a.download='qr.png'; a.click();
+    });
+    $('#copyBtn').addEventListener('click', async ()=>{
+      const data = toDataURL(qDiv);
+      if (!data) return alert('Generate a QR first.');
+      const blob = await (await fetch(data)).blob();
+      await navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]);
+      alert('Copied PNG to clipboard.');
+    });
+
+    // Share app
+    $('#shareApp').addEventListener('click', async ()=>{
+      if (navigator.share) {
+        await navigator.share({ title:'QR Pro', text:'Futuristic QR Suite', url: location.href });
+      } else {
+        alert('Sharing not supported here.');
+      }
+    });
+
+    // Embed widget
+    function updateEmbedCode(){
+      const data = getContent();
+      const enc = encryptIfNeeded(data || 'Hello from QR Pro');
+      const fg = $('#fgColor').value, bg=$('#bgColor').value;
+      const s = $('#qrSize').value, r=$('#rounded').value, m=$('#margin').value;
+      const logo = $('#logoUrl').value.trim();
+      const code = `<iframe srcdoc="${encodeURIComponent(`
+<!doctype html><html><body style='margin:0;display:grid;place-items:center;height:100%'>
+<div id='q'></div>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'><\/script>
+<script>
+ var q=new QRCode(document.getElementById('q'),{
+  text:${JSON.stringify(enc)},width:${s},height:${s},
+  colorDark:${JSON.stringify(fg)},colorLight:${JSON.stringify(bg)},
+  correctLevel:QRCode.CorrectLevel.H
+ });
+<\/script>
+<style>#q{border-radius:${r}px;padding:${m*2}px;position:relative}</style>
+${logo?`<img src='${logo}' style='position:absolute;width:20%;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.35)'/>`:''}
+</body></html>`)}" style="width:100%;height:360px;border:0;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.2)"></iframe>`;
+      $('#embedCode').value = code;
+    }
+    $('#embedBtn').addEventListener('click', updateEmbedCode);
+
+    // ------- SCANNER -------
+    const video = $('#cam');
+    const canvas = $('#scanCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    let scanTimer = null, stream = null;
+
+    async function startCamera(targetVideo){
+      const s = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }, audio:false });
+      targetVideo.srcObject = s;
+      return s;
+    }
+
+    $('#startCam').addEventListener('click', async ()=>{
+      try {
+        stream = await startCamera(video);
+        canvas.width = 640; canvas.height = 360;
+        const scan = () => {
+          if (!video.videoWidth) return;
+          canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
+          if (code) {
+            $('#scanResult').textContent = code.data;
+            bump('scanCount');
+          }
+        };
+        scanTimer = setInterval(scan, 250);
+      } catch (e) {
+        alert('Camera permission denied.');
+      }
+    });
+
+    $('#stopCam').addEventListener('click', ()=>{
+      if (scanTimer) { clearInterval(scanTimer); scanTimer=null; }
+      if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
+    });
+
+    // Image upload decode
+    $('#imgFile').addEventListener('change', async (e)=>{
+      const file = e.target.files?.[0]; if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.width; canvas.height = img.height;
+        ctx.drawImage(img,0,0);
+        const im = ctx.getImageData(0,0,canvas.width,canvas.height);
+        const code = jsQR(im.data, im.width, im.height);
+        $('#scanResult').textContent = code?.data || '(not found)';
+        if (code?.data) bump('scanCount');
+      }
+      img.src = URL.createObjectURL(file);
+    });
+
+    // Decrypt scanned
+    $('#decryptBtn').addEventListener('click', ()=>{
+      const data = $('#scanResult').textContent || '';
+      if (!data.startsWith('__enc__:')) return alert('Scanned data isn’t encrypted.');
+      const pwd = $('#decryptPwd').value.trim();
+      if (!pwd) return alert('Enter password.');
+      const plain = tryDecrypt(data, pwd);
+      $('#scanResult').textContent = plain;
+      bump('decryptCount');
+    });
+
+    // ------- AR STYLE PREVIEW -------
+    const arVideo = $('#arCam'); let arStream=null;
+    async function arStart(){
+      arStream = await startCamera(arVideo);
+      updateAROverlay();
+    }
+    function arStop(){
+      if (arStream){ arStream.getTracks().forEach(t=>t.stop()); arStream=null; }
+    }
+    $('#arStart').addEventListener('click', arStart);
+    $('#arStop').addEventListener('click', arStop);
+    $('#arMock').addEventListener('change', updateAROverlay);
+
+    function updateAROverlay(){
+      const data = toDataURL(qDiv) || toDataURL($('#heroQR'));
+      if (!data) return;
+      const el = $('#arOverlay');
+      el.src = data;
+      const mode = $('#arMock').value;
+      // Position + size presets
+      if (mode==='poster'){ el.style.top='6%'; el.style.left='6%'; el.style.width='32%'; }
+      if (mode==='card'){ el.style.top='20%'; el.style.left='10%'; el.style.width='26%'; }
+      if (mode==='billboard'){ el.style.top='10%'; el.style.left='10%'; el.style.width='40%'; }
+    }
+
+    // ------- 3D CUBE -------
+    let scene, camera, renderer, cube, anim=true;
+    function initThree(){
+      const wrap = document.getElementById('threeWrap');
+      const W = wrap.clientWidth, H = wrap.clientHeight;
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(50, W/H, 0.1, 100);
+      camera.position.z = 3.2;
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(W,H); wrap.innerHTML=''; wrap.appendChild(renderer.domElement);
+
+      const geo = new THREE.BoxGeometry(1.6,1.6,1.6);
+      const tex = new THREE.CanvasTexture(qCanvasFrom(qDiv));
+      const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: .4, metalness: .3, emissive: new THREE.Color(0x0ea5e9), emissiveIntensity: .15 });
+      cube = new THREE.Mesh(geo, mat);
+      scene.add(cube);
+
+      const light = new THREE.PointLight(0x0ea5e9, 2, 10); light.position.set(2,2,2); scene.add(light);
+      const amb = new THREE.AmbientLight(0xffffff, .3); scene.add(amb);
+
+      const loop = ()=> { if (anim) cube.rotation.y += 0.01; renderer.render(scene, camera); requestAnimationFrame(loop); };
+      loop();
+      window.addEventListener('resize', ()=>{
+        const W2 = wrap.clientWidth, H2 = wrap.clientHeight;
+        camera.aspect = W2/H2; camera.updateProjectionMatrix();
+        renderer.setSize(W2,H2);
+      });
+    }
+    function qCanvasFrom(container){
+      const img = container.querySelector('img') || container.querySelector('canvas');
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,c.width,c.height);
+      if (img) { ctx.drawImage(img, 0,0, c.width,c.height); }
+      return c;
+    }
+    function updateThreeTexture(){
+      if (!cube) return;
+      const cnv = qCanvasFrom(qDiv);
+      cube.material.map = new THREE.CanvasTexture(cnv);
+      cube.material.needsUpdate = true;
+    }
+    $('#spinBtn').addEventListener('click', ()=> anim = !anim);
+    $('#snap3d').addEventListener('click', ()=>{
+      const data = renderer.domElement.toDataURL('image/png');
+      const a=document.createElement('a'); a.href=data; a.download='qr-cube.png'; a.click();
+    });
+
+    // ------- Analytics (Local) -------
+    function bump(k){
+      const v = parseInt(localStorage.getItem(k)||'0',10)+1;
+      localStorage.setItem(k, v);
+      $('#'+k).textContent = v;
+    }
+    function restore(){
+      ['genCount','scanCount','decryptCount'].forEach(k=>{
+        $('#'+k).textContent = parseInt(localStorage.getItem(k)||'0',10);
+      });
+    }
+    restore();
+    $('#resetAnalytics').addEventListener('click', ()=>{
+      ['genCount','scanCount','decryptCount'].forEach(k=>localStorage.removeItem(k));
+      restore();
+    });
+
+    // ------- Hero QR init + Three init -------
+    function initHero(){
+      const wrap = $('#heroQR'); wrap.innerHTML='';
+      new QRCode(wrap, { text: 'https://yourdomain.com/qrpro', width: 220, height: 220, colorDark:'#111827', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.H });
+    }
+    initHero();
+    setTimeout(initThree, 120);
+
+    // ------- Update on style changes -------
+    ['fgColor','bgColor','qrSize','rounded','margin','logoUrl'].forEach(id=>{
+      $('#'+id).addEventListener('input', ()=>{
+        if (!qDiv.querySelector('img') && !qDiv.querySelector('canvas')) return;
+        const content = getContent() || 'Hello from QR Pro';
+        renderQR(encryptIfNeeded(content));
+        updateThreeTexture();
+        updateAROverlay();
+      });
+    });
+
+    // ------- AR camera auto-stop on page hide -------
+    document.addEventListener('visibilitychange', ()=>{ if (document.hidden) arStop(); });
+
+    // Initialize AR overlay on first paint
+    updateAROverlay();
+  </script>
+</body>
+</html>
