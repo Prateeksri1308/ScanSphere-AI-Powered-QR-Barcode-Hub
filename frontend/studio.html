@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QR Pro — Studio</title>
+  <link rel="stylesheet" href="theme.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script type="module" src="theme.js" defer></script>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000"/>
+  <link rel="icon" type="png" href="favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <style>
+    #qrcode canvas, #qrcode img { max-width: 100%; height: auto; }
+    #qrcode { text-align:center; position: relative; display:inline-block; }
+    #qrcode .logo {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      max-width:30%; max-height:30%;
+      border-radius:12px;
+    }
+    .bg-preview {
+      display:flex; justify-content:center; align-items:center;
+      padding:20px; border-radius:16px; min-height:280px;
+    }
+    .pattern-grid {
+      background-image:linear-gradient(45deg,#ddd 25%,transparent 25%),
+                       linear-gradient(-45deg,#ddd 25%,transparent 25%),
+                       linear-gradient(45deg,transparent 75%,#ddd 75%),
+                       linear-gradient(-45deg,transparent 75%,#ddd 75%);
+      background-size:20px 20px;
+    }
+    .gradient-bg {
+      background:linear-gradient(135deg,#a18cd1,#fbc2eb);
+    }
+  </style>
+</head>
+<body>
+  <!-- Futuristic Loader -->
+  <div id="page-loader">
+    <div class="loader-container">
+      <div class="logo-spin"><img src="favicon-32x32.png" alt="Logo" /></div>
+      <div class="dots"><span></span><span></span><span></span></div>
+      <div class="status-text"><span id="loader-text">Loading...</span></div>
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <nav class="nav container">
+      <div class="brand"><div class="brand-logo"></div><span>QR Pro</span></div>
+      <div class="nav-links desktop-only">
+        <a data-softnav href="index.html"   class="btn sm">Home</a>
+        <a data-softnav href="scanner.html" class="btn sm">Scanner</a>
+        <a data-softnav href="cube.html"    class="btn sm">3D</a>
+        <button class="btn icon" data-theme-toggle title="Toggle theme">🌓</button>
+      </div>
+      <button class="hamburger"><span></span><span></span><span></span></button>
+    </nav>
+  </header>
+  <div class="drawer-backdrop"></div>
+  <aside class="mobile-drawer">
+    <div class="drawer-head"><div class="brand"><div class="brand-logo"></div> QR Pro</div><button class="close-btn">&times;</button></div>
+    <nav class="nav-links" style="flex-direction:column;gap:12px;">
+      <a data-softnav href="index.html" class="btn sm">Home</a>
+      <a data-softnav href="studio.html" class="btn sm">Studio</a>
+      <a data-softnav href="scanner.html" class="btn sm">Scanner</a>
+      <button class="btn icon" data-theme-toggle>🌓</button>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="container section">
+    <section class="card hero">
+      <span class="badge">🎨 Studio</span>
+      <h1 class="h1">Advanced QR Customizer</h1>
+      <p class="p-muted">Logos, backgrounds, gradients, patterns, full export.</p>
+    </section>
+
+    <section class="card" style="margin-top:18px">
+      <h2>Customize</h2>
+      <label for="qrText">Text or URL</label>
+      <input id="qrText" class="input" placeholder="Enter text or URL">
+
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+        <div>
+          <label for="qrColor">Foreground</label>
+          <input id="qrColor" type="color" class="input" value="#000000">
+        </div>
+        <div>
+          <label for="bgColor">Background</label>
+          <input id="bgColor" type="color" class="input" value="#ffffff">
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:repeat(2,1fr);gap:12px;margin-top:10px">
+        <div>
+          <label for="qrSize">Size (%)</label>
+          <input id="qrSize" type="range" min="20" max="100" value="30" class="input">
+        </div>
+        <div>
+          <label for="errLevel">Error level</label>
+          <select id="errLevel" class="input">
+            <option value="L">Low</option>
+            <option value="M">Medium</option>
+            <option value="Q">Quartile</option>
+            <option value="H" selected>High</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+        <div>
+          <label for="margin">Margin</label>
+          <input id="margin" type="range" min="0" max="20" value="4" class="input">
+        </div>
+        <div>
+          <label for="logoUpload">Upload Logo</label>
+          <input id="logoUpload" type="file" accept="image/*" class="input">
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <label for="bgLayout">Background Layout</label>
+        <select id="bgLayout" class="input">
+          <option value="none">Plain</option>
+          <option value="gradient" selected>Gradient</option>
+          <option value="pattern">Pattern</option>
+          <option value="image">Custom Image</option>
+        </select>
+        <input id="bgImage" type="file" accept="image/*" class="input" style="margin-top:6px;display:none">
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:18px">
+      <h2>Preview</h2>
+      <div id="previewWrapper" class="bg-preview">
+        <div id="qrcode"></div>
+      </div>
+      <p id="qrInfo" class="p-muted"></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <button id="downloadPng" class="btn primary">Download PNG</button>
+        <button id="downloadSvg" class="btn ghost">Download SVG</button>
+        <button id="downloadPdf" class="btn ghost">Download PDF</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">Made with ❤️ by <strong>Prateek</strong></footer>
+
+  <!-- LOGIC -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const levelMap = v => ({L:QRCode.CorrectLevel.L,M:QRCode.CorrectLevel.M,Q:QRCode.CorrectLevel.Q,H:QRCode.CorrectLevel.H}[v]||QRCode.CorrectLevel.H);
+    const $ = id => document.getElementById(id);
+
+    let logoData = "";
+    let bgImgData = "";
+
+    function generate(){
+      const text = $("qrText").value || "https://example.com";
+      const fg   = $("qrColor").value;
+      const bg   = $("bgColor").value;
+      const pct  = parseInt($("qrSize").value||70,10);
+      const size = Math.floor(window.innerWidth * (pct/100));
+      const lvl  = levelMap($("errLevel").value);
+      const margin = parseInt($("margin").value||4,10);
+
+      const wrap = $("qrcode");
+      wrap.innerHTML = "";
+
+      new QRCode(wrap, { 
+        text, width:size, height:size, 
+        colorDark:fg, colorLight:bg, 
+        correctLevel:lvl, margin
+      });
+
+      if(logoData){
+        const img = document.createElement("img");
+        img.src = logoData;
+        img.className = "logo";
+        wrap.appendChild(img);
+      }
+
+      // Save to global
+      QRPRO?.saveLastQRText?.(text);
+      setTimeout(()=>{
+        const node = wrap.querySelector("canvas")||wrap.querySelector("img");
+        if(node){
+          const data=node.toDataURL?node.toDataURL("image/png"):node.src;
+          QRPRO?.saveLastQRPng?.(data);
+        }
+      },60);
+
+      $("qrInfo").textContent = text.startsWith("http") ? "🔗 Link detected" : "ℹ️ Plain text";
+
+      // Background preview
+      const bgWrap = $("previewWrapper");
+      bgWrap.className = "bg-preview";
+      const layout = $("bgLayout").value;
+      if(layout==="gradient") bgWrap.classList.add("gradient-bg");
+      if(layout==="pattern")  bgWrap.classList.add("pattern-grid");
+      if(layout==="image" && bgImgData){
+        bgWrap.style.backgroundImage=`url(${bgImgData})`;
+        bgWrap.style.backgroundSize="cover";
+      } else {
+        bgWrap.style.backgroundImage="";
+      }
+    }
+
+    // Events
+    ["qrText","qrColor","bgColor","qrSize","errLevel","margin","bgLayout"].forEach(id=>{
+      $(id).addEventListener("input", generate);
+      $(id).addEventListener("change", generate);
+    });
+
+    $("logoUpload").addEventListener("change", e=>{
+      const file=e.target.files[0];
+      if(!file) return;
+      const reader=new FileReader();
+      reader.onload=ev=>{ logoData=ev.target.result; generate(); };
+      reader.readAsDataURL(file);
+    });
+
+    $("bgLayout").addEventListener("change", e=>{
+      $("bgImage").style.display = e.target.value==="image"?"block":"none";
+      generate();
+    });
+    $("bgImage").addEventListener("change", e=>{
+      const file=e.target.files[0];
+      if(!file) return;
+      const reader=new FileReader();
+      reader.onload=ev=>{ bgImgData=ev.target.result; generate(); };
+      reader.readAsDataURL(file);
+    });
+
+    // Downloads
+    $("downloadPng").addEventListener("click",()=>{
+      const node=document.querySelector("#qrcode canvas")||document.querySelector("#qrcode img");
+      if(!node) return;
+      const href=node.toDataURL?node.toDataURL("image/png"):node.src;
+      Object.assign(document.createElement("a"),{href,download:"qrcode.png"}).click();
+    });
+    $("downloadSvg").addEventListener("click",()=>{
+      const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><foreignObject width="100%" height="100%">${document.querySelector("#qrcode").innerHTML}</foreignObject></svg>`;
+      const blob=new Blob([svg],{type:"image/svg+xml"});
+      Object.assign(document.createElement("a"),{href:URL.createObjectURL(blob),download:"qrcode.svg"}).click();
+    });
+    $("downloadPdf").addEventListener("click",()=>{
+      const { jsPDF } = window.jspdf;
+      const doc=new jsPDF();
+      const node=document.querySelector("#qrcode canvas");
+      if(node){
+        const img=node.toDataURL("image/png");
+        doc.addImage(img,"PNG",20,20,160,160);
+        doc.save("qrcode.pdf");
+      }
+    });
+
+    // 🔑 Init — prefer QR from index if available
+window.addEventListener("DOMContentLoaded", ()=>{
+  const lastText = QRPRO?.getLastQRText?.();
+  const lastPng  = QRPRO?.getLastQRPng?.();
+
+  // ✅ Always default to gradient background
+  $("bgLayout").value = "gradient";
+
+  if(lastText){
+    $("qrText").value = lastText;
+  }
+
+  if(lastPng){
+    $("qrcode").innerHTML = `<img src="${lastPng}" alt="Last QR"/>`;
+    $("qrInfo").textContent = lastText && lastText.startsWith("http")
+      ? "🔗 Link detected" : "ℹ️ Plain text";
+
+    // also apply gradient background when showing last QR
+    $("previewWrapper").classList.add("gradient-bg");
+  } else {
+    generate();
+  }
+});
+  </script>
+</body>
+</html>
