@@ -1,7 +1,6 @@
 [build]
-  base = "frontend"
-  command = "npm run build"
-  publish = "dist"
+  publish = "ScanSphere-AI-Powered-QR-Barcode-Hub/frontend/dist"
+
 
 [build.environment]
   NODE_VERSION = "20"
