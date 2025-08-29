@@ -1,0 +1,3 @@
+# Redirect all routes to index.html (for React/Vite SPA)
+# This makes /about, /scanner, etc. work
+/*    /index.html   200
